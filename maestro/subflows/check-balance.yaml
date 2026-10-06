@@ -1,0 +1,16 @@
+# Asserts an account's balance on Manage Accounts. Ends there.
+# env: NAME, BALANCE (regex, e.g. "Rp\\. 5\\.050\\.000")
+appId: io.github.josach07.nettkeeping
+---
+- tapOn:
+    id: nav.settings
+- tapOn:
+    id: settings.accounts
+- tapOn:
+    id: "manageAccounts.balanceToggle.${NAME}"
+- assertVisible:
+    text: ${BALANCE}
+    below:
+      text: ${NAME}
+- tapOn:
+    id: "manageAccounts.balanceToggle.${NAME}"

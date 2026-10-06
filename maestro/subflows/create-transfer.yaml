@@ -1,0 +1,26 @@
+# Starts anywhere with the bottom nav visible; ends on Create Transaction after
+# the success popup. Same-currency accounts only (no exchange rate step).
+# env: FROM, TO, AMOUNT
+appId: io.github.josach07.nettkeeping
+---
+- tapOn:
+    id: nav.create
+- scrollUntilVisible:
+    element:
+      id: createTransaction.bulkInsert
+    direction: UP
+- tapOn:
+    id: createTransaction.type.spending
+- runFlow:                               # the starter categories push Transfer below the fold
+    file: pick.yaml
+    env: { FIELD: category, OPTION: Transfer From Account }
+- runFlow:
+    file: pick.yaml
+    env: { FIELD: transferFromAccount, OPTION: "${FROM}" }
+- runFlow:
+    file: pick.yaml
+    env: { FIELD: transferToAccount, OPTION: "${TO}" }
+- runFlow:
+    file: type.yaml
+    env: { ID: createTransaction.amount, TEXT: "${AMOUNT}" }
+- runFlow: save-transaction.yaml

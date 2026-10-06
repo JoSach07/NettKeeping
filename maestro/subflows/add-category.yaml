@@ -1,0 +1,29 @@
+# Starts and ends on Manage Categories (Settings > Transaction categories).
+# env: NAME, TYPE (Income | Spending)
+appId: io.github.josach07.nettkeeping
+---
+- scrollUntilVisible:                    # callers may leave the long list scrolled down
+    timeout: 60000                       # long lists scroll slowly on the A9
+    element:
+      id: manageCategories.add
+    direction: UP
+- tapOn:
+    id: manageCategories.add
+- tapOn:
+    id: manageCategories.form.name
+- inputText: ${NAME}
+- hideKeyboard
+- tapOn:
+    id: manageCategories.form.type
+- tapOn:
+    id: "picker.option.${TYPE}"
+- scrollUntilVisible:
+    timeout: 60000                       # long lists scroll slowly on the A9
+    element:
+      id: manageCategories.form.save
+- tapOn:
+    id: manageCategories.form.save
+- scrollUntilVisible:                    # the starter categories make the list long
+    timeout: 60000                       # long lists scroll slowly on the A9
+    element:
+      id: "manageCategories.edit.${NAME}"

@@ -1,0 +1,205 @@
+# FCT sheet: Manage Investments Screen, plus the opening-quantity anchor
+# (September) and decimal quantities (October).
+appId: io.github.josach07.nettkeeping
+name: 07 Manage Investments
+tags: [investments]
+---
+- runFlow: ../subflows/seed-basics.yaml
+- tapOn:
+    id: nav.settings
+- tapOn:
+    id: settings.investments
+
+# --- Add new investment, with a new investment category from the dropdown ----
+# FCT: "new investment category" option in the dropdown; optional Unit field.
+- tapOn:
+    id: manageInvestments.add
+- tapOn:
+    id: manageInvestments.form.category
+- tapOn:
+    id: selectInvestmentCategory.new
+- tapOn:
+    id: selectInvestmentCategory.new.name
+- eraseText: 30
+- inputText: Metals
+- hideKeyboard
+- tapOn:
+    id: selectInvestmentCategory.new.save
+- assertVisible:
+    id: manageInvestments.form.category
+    text: "Metals.*"
+- tapOn:
+    id: manageInvestments.form.name
+- inputText: Gold
+- hideKeyboard
+- tapOn:
+    id: manageInvestments.form.currency
+- tapOn:
+    id: picker.search
+- inputText: IDR
+- hideKeyboard
+- tapOn:
+    id: "picker.option.IDR - .*"
+- tapOn:
+    id: manageInvestments.form.unit
+- inputText: gram
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: manageInvestments.form.decimals
+- tapOn:
+    id: manageInvestments.form.decimals
+- tapOn:
+    id: "picker.option.2 .*"
+- scrollUntilVisible:
+    element:
+      id: manageInvestments.form.quantity
+- tapOn:
+    id: manageInvestments.form.quantity
+- inputText: "10,25"
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: manageInvestments.form.unitValue
+- tapOn:
+    id: manageInvestments.form.unitValue
+- inputText: "1000000"
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: manageInvestments.form.save
+- tapOn:
+    id: manageInvestments.form.save
+- assertVisible:
+    id: manageInvestments.edit.Gold
+- assertVisible: "Metals"
+
+# --- Delete unmutated investment: popup uses the unit (FCT) ------------------
+- tapOn:
+    id: manageInvestments.delete.Gold
+- assertVisible: ".*still holds 10,25 gram\\..*"
+- assertVisible: "Write Off & Delete"
+- tapOn:
+    id: manageInvestments.deleteCancel
+
+# --- Display investment detail: goes to the card, expanded (FCT) -------------
+- tapOn:
+    id: manageInvestments.view.Gold
+- assertVisible:
+    id: investments.chart.vpu.Gold          # card is open and scrolled to
+- scrollUntilVisible:
+    element:
+      id: investments.manage
+    direction: UP
+- tapOn:
+    id: investments.manage
+
+# --- Edit unmutated investment -----------------------------------------------
+- tapOn:
+    id: manageInvestments.edit.Gold
+- assertVisible: "Edit Investment"
+- assertVisible:
+    id: manageInvestments.form.quantity
+    enabled: true
+- tapOn:
+    id: manageInvestments.form.name
+- eraseText: 30
+- inputText: Gold Bar
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: manageInvestments.form.save
+- tapOn:
+    id: manageInvestments.form.save
+- assertVisible:
+    id: "manageInvestments.edit.Gold Bar"
+
+# --- Opening anchor: a buy dated BEFORE creation explains the opening --------
+# position instead of adding to it, so the holding stays 10,25.
+- tapOn:
+    id: nav.create
+- tapOn:
+    id: createTransaction.type.spending
+- runFlow:
+    file: ../subflows/pick.yaml
+    env: { FIELD: category, OPTION: Investment }
+- runFlow:
+    file: ../subflows/pick.yaml
+    env: { FIELD: account, OPTION: Bank A }
+- runFlow:
+    file: ../subflows/pick.yaml
+    env: { FIELD: investment, OPTION: Gold Bar }
+- runFlow:
+    file: ../subflows/type.yaml
+    env: { ID: createTransaction.investmentQuantity, TEXT: "2" }
+- runFlow:
+    file: ../subflows/type.yaml
+    env: { ID: createTransaction.investmentUnitValue, TEXT: "900000", CLEAR: "true" }
+- scrollUntilVisible:
+    element:
+      id: createTransaction.date
+- tapOn:
+    id: createTransaction.date
+- tapOn:
+    id: calendar.prev
+- tapOn:
+    id: calendar.day.15
+- runFlow: ../subflows/save-transaction.yaml
+- tapOn:
+    id: nav.investments
+- runFlow:
+    when:
+      notVisible:
+        id: "investments.quantityHistory.Gold Bar"
+    commands:
+      - tapOn:
+          id: "investments.card.Gold Bar"
+- scrollUntilVisible:
+    element:
+      id: "investments.quantityHistory.Gold Bar"
+- tapOn:
+    id: "investments.quantityHistory.Gold Bar"
+# Newest first: the opening entry (creation day) above the back-dated buy.
+- assertVisible:
+    id: investmentQuantityHistory.row.0.kind
+    text: "Opening"
+- assertVisible:
+    id: investmentQuantityHistory.row.0.amount
+    text: "10,25"
+- assertVisible:
+    id: investmentQuantityHistory.row.1.kind
+    text: "Buy"
+- assertVisible: "15 .*"
+- assertNotVisible: "12,25"
+- tapOn:
+    id: investmentQuantityHistory.back
+
+# --- Edit mutated investment: quantity, decimals, VPU, currency locked --------
+- scrollUntilVisible:
+    element:
+      id: investments.manage
+    direction: UP
+- tapOn:
+    id: investments.manage
+- tapOn:
+    id: "manageInvestments.edit.Gold Bar"
+- assertVisible: "Quantity, decimals, value per unit and currency are locked.*"
+- assertVisible:
+    id: manageInvestments.form.currency
+    enabled: false
+- assertVisible:
+    id: manageInvestments.form.decimals
+    enabled: false
+- scrollUntilVisible:
+    element:
+      id: manageInvestments.form.cancel
+- tapOn:
+    id: manageInvestments.form.cancel
+
+# --- Delete mutated investment (write-off) -----------------------------------
+- tapOn:
+    id: "manageInvestments.delete.Gold Bar"
+- tapOn:
+    id: manageInvestments.deleteConfirm
+- assertNotVisible:
+    id: "manageInvestments.edit.Gold Bar"

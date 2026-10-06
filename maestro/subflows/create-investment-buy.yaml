@@ -1,0 +1,28 @@
+# Spending > Investment buy dated today. Ends on Create Transaction.
+# env: ACCOUNT, INVESTMENT, QUANTITY, VPU
+appId: io.github.josach07.nettkeeping
+---
+- tapOn:
+    id: nav.create
+- scrollUntilVisible:                    # scroll to the very top: a type button half under the status bar ignores taps
+    element:
+      id: createTransaction.bulkInsert
+    direction: UP
+- tapOn:
+    id: createTransaction.type.spending
+- runFlow:
+    file: pick.yaml
+    env: { FIELD: category, OPTION: Investment }
+- runFlow:
+    file: pick.yaml
+    env: { FIELD: account, OPTION: "${ACCOUNT}" }
+- runFlow:
+    file: pick.yaml
+    env: { FIELD: investment, OPTION: "${INVESTMENT}" }
+- runFlow:
+    file: type.yaml
+    env: { ID: createTransaction.investmentQuantity, TEXT: "${QUANTITY}", CLEAR: "true" }
+- runFlow:
+    file: type.yaml
+    env: { ID: createTransaction.investmentUnitValue, TEXT: "${VPU}", CLEAR: "true" }
+- runFlow: save-transaction.yaml

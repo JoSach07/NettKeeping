@@ -1,0 +1,163 @@
+# FCT sheet: Create Transaction Screen, investment rows
+#   - Create new investment via the investment dropdown (FCT bug: flat 0-0
+#     chart and a 0/0 first history entry; option only for Spending > Investment)
+#   - Create investment transaction (FCT: liquidation pre-fills the latest value
+#     per unit)
+# plus decimal quantities (October).
+appId: io.github.josach07.nettkeeping
+name: 03 Create Investment Transaction
+tags: [transactions, investments]
+---
+- runFlow: ../subflows/seed-basics.yaml
+- tapOn:
+    id: nav.create
+
+# --- Buy into a brand-new investment created from the dropdown ---------------
+- tapOn:
+    id: createTransaction.type.spending
+- runFlow:
+    file: ../subflows/pick.yaml
+    env: { FIELD: category, OPTION: Investment }
+- runFlow:
+    file: ../subflows/pick.yaml
+    env: { FIELD: account, OPTION: Bank A }
+- tapOn:
+    id: createTransaction.investment
+- tapOn:
+    id: selectTransactionField.newInvestment
+- tapOn:
+    id: selectTransactionField.newInvestment.name
+- inputText: Gold
+- hideKeyboard
+- tapOn:
+    id: selectTransactionField.newInvestment.decimals
+- tapOn:
+    id: "picker.option.2 .*"               # "2 (0,01)"
+- tapOn:
+    id: selectTransactionField.newInvestment.save
+- assertVisible:
+    id: createTransaction.investment
+    text: "Gold.*"
+- assertVisible: "This investment allows 2 decimals\\."
+- runFlow:
+    file: ../subflows/type.yaml
+    env: { ID: createTransaction.investmentQuantity, TEXT: "1,5" }
+- runFlow:
+    file: ../subflows/type.yaml
+    env: { ID: createTransaction.investmentUnitValue, TEXT: "1500000" }
+- runFlow:
+    file: ../subflows/type.yaml
+    env: { ID: createTransaction.investmentFees, TEXT: "5000" }
+# 1,5 x 1.500.000 + 5.000
+- scrollUntilVisible:                    # below the fold when an upper field was just typed into
+    element:
+      id: createTransaction.investmentTotalAmount
+- assertVisible:
+    id: createTransaction.investmentTotalAmount
+    text: "Rp\\. 2\\.255\\.000"
+- runFlow: ../subflows/save-transaction.yaml
+
+# --- "New Investment" is only offered for Spending > Investment --------------
+- scrollUntilVisible:                    # scroll to the very top: a type button half under the status bar ignores taps
+    element:
+      id: createTransaction.bulkInsert
+    direction: UP
+- tapOn:
+    id: createTransaction.type.income
+- runFlow:
+    file: ../subflows/pick.yaml
+    env: { FIELD: category, OPTION: Investment Liquidation }
+- runFlow:
+    file: ../subflows/pick.yaml
+    env: { FIELD: account, OPTION: Bank A }
+- tapOn:
+    id: createTransaction.investment
+- assertNotVisible:
+    id: selectTransactionField.newInvestment
+- tapOn:
+    id: selectTransactionField.option.Gold
+
+# --- Liquidation pre-fills the latest value per unit -------------------------
+- assertVisible:
+    id: createTransaction.investmentUnitValue
+    text: "1\\.500\\.000"
+- runFlow:
+    file: ../subflows/type.yaml
+    env: { ID: createTransaction.investmentQuantity, TEXT: "0,5" }
+- scrollUntilVisible:                    # below the fold when an upper field was just typed into
+    element:
+      id: createTransaction.investmentTotalAmount
+- assertVisible:
+    id: createTransaction.investmentTotalAmount
+    text: "Rp\\. 750\\.000"
+- runFlow: ../subflows/save-transaction.yaml
+
+# --- Selling more than held is refused ---------------------------------------
+- runFlow:
+    file: ../subflows/pick.yaml
+    env: { FIELD: account, OPTION: Bank A }
+- runFlow:
+    file: ../subflows/pick.yaml
+    env: { FIELD: investment, OPTION: Gold }
+- runFlow:
+    file: ../subflows/type.yaml
+    env: { ID: createTransaction.investmentQuantity, TEXT: "5" }
+- scrollUntilVisible:
+    element:
+      id: createTransaction.save
+- tapOn:
+    id: createTransaction.save
+- assertVisible:
+    id: popup.danger
+- assertVisible:
+    id: popup.message
+    text: "Liquidation quantity cannot be higher than current investment quantity\\."
+- tapOn:
+    id: popup.danger
+- scrollUntilVisible:                    # the reason stays under the field after the popup
+    element:
+      text: "Liquidation quantity cannot be higher than current investment quantity\\."
+    direction: UP
+
+# --- History: Buy then Sell, and no 0/0 entry from creating the investment ---
+# The history screens list NEWEST first, so row 0 is the sell.
+- tapOn:
+    id: nav.investments
+- tapOn:
+    id: investments.card.Gold
+- scrollUntilVisible:
+    element:
+      id: investments.quantityHistory.Gold
+- tapOn:
+    id: investments.quantityHistory.Gold
+- assertVisible:
+    id: investmentQuantityHistory.row.0.kind
+    text: "Sell"
+- assertVisible:
+    id: investmentQuantityHistory.row.0.amount
+    text: "-0,5"
+- assertVisible:
+    id: investmentQuantityHistory.row.1.kind
+    text: "Buy"
+- assertVisible:
+    id: investmentQuantityHistory.row.1.amount
+    text: "\\+1,5"
+- assertNotVisible:
+    id: investmentQuantityHistory.row.2
+- assertNotVisible:                     # transaction entries are edited from the transaction
+    id: investmentQuantityHistory.edit.0
+- tapOn:
+    id: investmentQuantityHistory.back
+- tapOn:
+    id: investments.valueHistory.Gold
+- assertNotVisible: "Rp\\. 0"                # FCT: no 0-value first entry
+- assertNotVisible:
+    id: investmentValueHistory.row.2
+- tapOn:
+    id: investmentValueHistory.back
+- takeScreenshot: "${typeof SHOTS !== 'undefined' ? SHOTS : 'maestro/screenshots'}/03-gold-charts"   # VPU/total/quantity charts: no flat 0 line
+
+# --- Bank A: 10.000.000 - 2.255.000 + 750.000 ---------------------------------
+- runFlow:
+    file: ../subflows/check-balance.yaml
+    env: { NAME: Bank A, BALANCE: "Rp\\. 8\\.495\\.000" }

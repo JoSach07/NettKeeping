@@ -1,0 +1,151 @@
+# FCT sheet: Settings Screen (PIN and biometrics are in 12-lock.yaml)
+appId: io.github.josach07.nettkeeping
+name: 11 Settings
+tags: [settings]
+---
+- runFlow: ../subflows/launch-fresh.yaml
+- tapOn:
+    id: nav.settings
+
+# --- Help popup: includes Export and import data (FCT) -----------------------
+- tapOn:
+    id: settings.info
+- scrollUntilVisible:
+    element:
+      text: "Export and import data"
+- assertVisible: "Exports application data including accounts, investments, transactions, and all other user inputted data\\. Useful as a backup or for migrating data to another device\\."
+- tapOn:
+    id: settings.info.close
+
+# --- Change app theme --------------------------------------------------------
+- tapOn:
+    id: settings.theme
+- tapOn:
+    id: settings.theme.option.dark
+- back                               # the theme dialog stays open after a pick
+- assertVisible:
+    text: "Dark"
+    below:
+      text: "App theme"
+- takeScreenshot: "${typeof SHOTS !== 'undefined' ? SHOTS : 'maestro/screenshots'}/11-settings-dark"
+- tapOn:
+    id: settings.theme
+- tapOn:
+    id: settings.theme.option.device
+- back
+- assertVisible: "Use device settings"
+
+# --- Left-handed mode moves Home's export button (FCT bug: it was reversed) --
+- tapOn:
+    id: nav.home
+- assertVisible:
+    id: home.export
+    rightOf:
+      text: "Home"
+- tapOn:
+    id: nav.settings
+- tapOn:
+    id: settings.leftHanded
+- assertVisible:
+    id: settings.leftHanded.switch
+    checked: true
+- tapOn:
+    id: nav.home
+- assertVisible:
+    id: home.export
+    leftOf:
+      text: "Home"
+- tapOn:
+    id: nav.settings
+- tapOn:
+    id: settings.leftHanded
+- assertVisible:
+    id: settings.leftHanded.switch
+    checked: false
+
+# --- Create transaction on startup ----------------------------------------------
+- tapOn:
+    id: settings.startOnCreate
+- assertVisible:
+    id: settings.startOnCreate.switch
+    checked: true
+- launchApp:
+    stopApp: true
+- extendedWaitUntil:
+    visible:
+      id: createTransaction.type.income      # (the text "Create transaction" also matches the nav button)
+    timeout: 15000
+- tapOn:
+    id: nav.settings
+- tapOn:
+    id: settings.startOnCreate
+- launchApp:
+    stopApp: true
+- extendedWaitUntil:
+    visible:
+      id: home.export
+    timeout: 15000
+
+# --- Navigation rows ---------------------------------------------------------
+- tapOn:
+    id: nav.settings
+- tapOn:
+    id: settings.accounts
+- assertVisible:
+    id: manageAccounts.add
+- tapOn:
+    id: manageAccounts.back
+- tapOn:
+    id: settings.investments
+- assertVisible:
+    id: manageInvestments.add
+- tapOn:
+    id: manageInvestments.back
+- tapOn:
+    id: settings.transactionCategories
+- assertVisible:
+    id: manageCategories.add
+- tapOn:
+    id: manageCategories.back
+- tapOn:
+    id: settings.investmentCategories
+- assertVisible:
+    id: manageInvestmentCategories.add
+- tapOn:
+    id: manageInvestmentCategories.back
+
+# --- Export output directory: default shown before it is chosen (FCT) --------
+- scrollUntilVisible:
+    element:
+      text: "Download/NettKeeping \\(choose once\\)"
+
+# --- Export data: password validation (the export itself needs the folder ---
+# picker, so it stays manual)
+- scrollUntilVisible:                    # the directory row can sit right above the nav with Export data below the fold
+    element:
+      id: settings.exportData
+- tapOn:
+    id: settings.exportData
+- tapOn:
+    id: settings.backup.password
+- inputText: short
+- hideKeyboard
+- tapOn:
+    id: settings.backup.confirm
+- assertVisible:
+    id: settings.backup.status
+    text: "Password must be at least 8 characters\\."
+- tapOn:
+    id: settings.backup.password
+- inputText: "12345"
+- tapOn:
+    id: settings.backup.confirmPassword
+- inputText: different1
+- hideKeyboard
+- tapOn:
+    id: settings.backup.confirm
+- assertVisible:
+    id: settings.backup.status
+    text: "Password confirmation does not match\\."
+- tapOn:
+    id: settings.backup.cancel

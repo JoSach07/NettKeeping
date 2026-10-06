@@ -1,0 +1,13 @@
+# Taps ${ID} once and makes sure ${EXPECT} appears. (It used to tap a second
+# time if the first was swallowed; that hid a real bug on Android 10, fixed
+# 2026-10-07 by useBlurInputOnKeyboardHide, so a swallowed tap must fail now.)
+appId: io.github.josach07.nettkeeping
+---
+- scrollUntilVisible:
+    element:
+      id: ${ID}
+- waitForAnimationToEnd
+- tapOn:
+    id: ${ID}
+- assertVisible:
+    id: ${EXPECT}

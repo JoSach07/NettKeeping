@@ -1,0 +1,23 @@
+# Creates an income or spending transaction (not transfer/investment) dated today.
+# Ends on Create Transaction.
+# env: TYPE (income | spending), CATEGORY, ACCOUNT, AMOUNT
+appId: io.github.josach07.nettkeeping
+---
+- tapOn:
+    id: nav.create
+- scrollUntilVisible:                    # scroll to the very top: a type button half under the status bar ignores taps
+    element:
+      id: createTransaction.bulkInsert
+    direction: UP
+- tapOn:
+    id: "createTransaction.type.${TYPE}"
+- runFlow:
+    file: pick.yaml
+    env: { FIELD: category, OPTION: "${CATEGORY}" }
+- runFlow:
+    file: pick.yaml
+    env: { FIELD: account, OPTION: "${ACCOUNT}" }
+- runFlow:
+    file: type.yaml
+    env: { ID: createTransaction.amount, TEXT: "${AMOUNT}", CLEAR: "true" }
+- runFlow: save-transaction.yaml

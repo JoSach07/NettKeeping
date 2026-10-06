@@ -1,0 +1,25 @@
+# Starts and ends on Manage Accounts.
+# env: NAME, CURRENCY (code, e.g. IDR), BALANCE (typed as-is)
+appId: io.github.josach07.nettkeeping
+---
+- tapOn:
+    id: manageAccounts.add
+- tapOn:
+    id: manageAccounts.form.name
+- inputText: ${NAME}
+- tapOn:
+    id: manageAccounts.form.currency
+- tapOn:
+    id: picker.search
+- inputText: ${CURRENCY}
+- hideKeyboard
+- tapOn:
+    id: "picker.option.${CURRENCY} - .*"
+- tapOn:
+    id: manageAccounts.form.balance
+- inputText: ${BALANCE}
+- hideKeyboard
+- tapOn:
+    id: manageAccounts.form.save
+- assertVisible:
+    id: "manageAccounts.row.${NAME}"

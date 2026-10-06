@@ -1,0 +1,119 @@
+# FCT sheet: Accounts Screen (and the Account Transactions list it leads to)
+appId: io.github.josach07.nettkeeping
+name: 05 Accounts
+tags: [accounts]
+---
+- runFlow: ../subflows/seed-basics.yaml
+- runFlow:
+    file: ../subflows/create-simple.yaml
+    env: { TYPE: spending, CATEGORY: Food, ACCOUNT: Bank A, AMOUNT: "100000" }
+- runFlow:
+    file: ../subflows/create-simple.yaml
+    env: { TYPE: income, CATEGORY: Salary, ACCOUNT: Bank A, AMOUNT: "300000" }
+- tapOn:
+    id: nav.accounts
+
+# --- Manage button -----------------------------------------------------------
+- tapOn:
+    id: accounts.manage
+- assertVisible:
+    id: manageAccounts.add
+- tapOn:
+    id: manageAccounts.back
+
+# --- Collapsible card + hidden balance ---------------------------------------
+# FCT: the balance must hide again once the card is collapsed.
+- tapOn:
+    id: "accounts.card.Bank A"
+- assertVisible:
+    id: "accounts.balance.Bank A"
+    text: "Rp\\. •+"
+- tapOn:
+    id: "accounts.balanceToggle.Bank A"
+# 10.000.000 - 100.000 + 300.000
+- assertVisible:
+    id: "accounts.balance.Bank A"
+    text: "Rp\\. 10\\.200\\.000"
+- tapOn:
+    id: "accounts.card.Bank A"
+- assertNotVisible:
+    id: "accounts.balance.Bank A"
+- tapOn:
+    id: "accounts.card.Bank A"
+- assertVisible:
+    id: "accounts.balance.Bank A"
+    text: "Rp\\. •+"
+
+# --- Line chart ranges -------------------------------------------------------
+- assertVisible:
+    id: "accounts.chart.Bank A"
+- tapOn:
+    id: "accounts.range.Bank A.1d"
+- tapOn:
+    id: "accounts.range.Bank A.1w"
+- tapOn:
+    id: "accounts.range.Bank A.3m"
+- tapOn:
+    id: "accounts.range.Bank A.6m"
+- tapOn:
+    id: "accounts.range.Bank A.ytd"
+- tapOn:
+    id: "accounts.range.Bank A.1y"
+- tapOn:
+    id: "accounts.range.Bank A.5y"
+- tapOn:
+    id: "accounts.range.Bank A.1m"
+- takeScreenshot: "${typeof SHOTS !== 'undefined' ? SHOTS : 'maestro/screenshots'}/05-bank-a-chart"
+
+# --- Export dialog (export itself is manual) ---------------------------------
+- scrollUntilVisible:
+    element:
+      id: "accounts.export.Bank A"
+- tapOn:
+    id: "accounts.export.Bank A"
+- assertVisible:
+    id: excelExport.confirm
+- tapOn:
+    id: excelExport.cancel
+
+# --- View all transactions, edit, delete ----------------------------------------
+- tapOn:
+    id: "accounts.allTransactions.Bank A"
+- assertVisible:
+    id: accountTransactions.list
+- assertVisible: "Food"
+- assertVisible: "Salary"
+# Edit the spending: 100.000 -> 150.000
+- tapOn:
+    id: "accountTransactions.edit.*"
+    index: 1
+- assertVisible: "Edit Transaction"
+- assertVisible:
+    id: createTransaction.category
+    text: "Food.*"
+- runFlow:
+    file: ../subflows/type.yaml
+    env: { ID: createTransaction.amount, TEXT: "150000", CLEAR: "true" }
+- runFlow:
+    file: ../subflows/tap-expect.yaml
+    env: { ID: createTransaction.save, EXPECT: confirm.ok }
+- tapOn:
+    id: confirm.ok
+- extendedWaitUntil:
+    visible:
+      id: accountTransactions.list
+    timeout: 15000
+- assertVisible: "-Rp\\. 150\\.000"
+# Delete the income
+- tapOn:
+    id: "accountTransactions.delete.*"
+    index: 0
+- tapOn:
+    id: accountTransactions.deleteConfirm
+- assertNotVisible: "Salary"
+- tapOn:
+    id: accountTransactions.back
+# 10.000.000 - 150.000
+- runFlow:
+    file: ../subflows/check-balance.yaml
+    env: { NAME: Bank A, BALANCE: "Rp\\. 9\\.850\\.000" }

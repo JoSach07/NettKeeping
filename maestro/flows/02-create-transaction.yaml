@@ -1,0 +1,223 @@
+# FCT sheet: Create Transaction Screen (income / spending / transfer rows),
+# plus the future-date guard added in September.
+# Investment rows are in 03-create-investment-transaction.yaml.
+appId: io.github.josach07.nettkeeping
+name: 02 Create Transaction
+tags: [transactions]
+---
+- runFlow: ../subflows/seed-basics.yaml
+- tapOn:
+    id: nav.create
+
+# --- Date picker: future days disabled, past days selectable -----------------
+- scrollUntilVisible:
+    element:
+      id: createTransaction.date
+- tapOn:
+    id: createTransaction.date
+- assertVisible:
+    id: calendar.title
+- tapOn:
+    id: calendar.next
+- assertVisible:
+    id: calendar.day.1
+    enabled: false
+- tapOn:
+    id: calendar.prev
+- tapOn:
+    id: calendar.prev
+- tapOn:
+    id: calendar.day.15
+- assertVisible:
+    id: createTransaction.date
+    text: "15/\\d\\d/\\d{4}"
+# Back to today for the saves below. The date sticks between saves, and a
+# transaction dated before the account's creation day (its balance anchor)
+# moves the opening balance, not the current one, which the balance checks
+# at the end rely on.
+- tapOn:
+    id: createTransaction.date
+- tapOn:
+    id: calendar.next
+- evalScript: ${output.today = new Date().getDate()}
+- tapOn:
+    id: "calendar.day.${output.today}"
+
+# --- Create income transaction, with a new category made from the dropdown ------
+- scrollUntilVisible:                    # scroll to the very top: a type button half under the status bar ignores taps
+    element:
+      id: createTransaction.bulkInsert
+    direction: UP
+- tapOn:
+    id: createTransaction.type.income
+- tapOn:
+    id: createTransaction.category
+- tapOn:
+    id: selectTransactionField.newCategory
+- tapOn:
+    id: selectTransactionField.newCategory.name
+- inputText: Freelance
+- hideKeyboard
+- tapOn:
+    id: selectTransactionField.newCategory.save
+- assertVisible:
+    id: createTransaction.category
+    text: "Freelance.*"
+- runFlow:
+    file: ../subflows/pick.yaml
+    env: { FIELD: account, OPTION: Bank A }
+- runFlow:
+    file: ../subflows/type.yaml
+    env: { ID: createTransaction.amount, TEXT: "100000" }
+
+# --- Description: soft limit of 255 -----------------------------------------
+# FCT: past 255 the counter and border turn red; saving is refused.
+- scrollUntilVisible:
+    element:
+      id: createTransaction.description
+- tapOn:
+    id: createTransaction.description
+- inputRandomText:
+    length: 256
+- hideKeyboard
+- assertVisible:
+    id: createTransaction.descriptionCounter
+    text: "256/255"
+- takeScreenshot: "${typeof SHOTS !== 'undefined' ? SHOTS : 'maestro/screenshots'}/02-description-over-limit"     # counter + border should be red
+- runFlow:                               # validation runs before the confirm popup
+    file: ../subflows/tap-expect.yaml
+    env: { ID: createTransaction.save, EXPECT: popup.danger }
+- assertVisible:
+    id: popup.message
+    text: "Description cannot exceed 255 characters\\."
+- tapOn:
+    id: popup.danger
+- tapOn:
+    id: createTransaction.description
+- eraseText: 1
+- hideKeyboard
+- assertVisible:
+    id: createTransaction.descriptionCounter
+    text: "255/255"
+- runFlow: ../subflows/save-transaction.yaml
+
+# --- Create spending transaction, with a new category made from the dropdown ----
+- scrollUntilVisible:                    # scroll to the very top: a type button half under the status bar ignores taps
+    element:
+      id: createTransaction.bulkInsert
+    direction: UP
+- tapOn:
+    id: createTransaction.type.spending
+- tapOn:
+    id: createTransaction.category
+- tapOn:
+    id: selectTransactionField.newCategory
+- tapOn:
+    id: selectTransactionField.newCategory.name
+- inputText: Snacks
+- hideKeyboard
+- tapOn:
+    id: selectTransactionField.newCategory.save
+- assertVisible:
+    id: createTransaction.category
+    text: "Snacks.*"
+- runFlow:
+    file: ../subflows/pick.yaml
+    env: { FIELD: account, OPTION: Bank A }
+- runFlow:
+    file: ../subflows/type.yaml
+    env: { ID: createTransaction.amount, TEXT: "50000" }
+- runFlow: ../subflows/save-transaction.yaml
+
+# --- Create transfer transaction across currencies, decimal exchange rate -------
+# FCT: the rate must accept decimals and calculate with them.
+# 5.000.000 / 16250,75 = 307,678 -> $ 307,68. Dropping the decimal would give
+# 307,69, and dropping the separator would give 3,08.
+- scrollUntilVisible:                    # scroll to the very top: a type button half under the status bar ignores taps
+    element:
+      id: createTransaction.bulkInsert
+    direction: UP
+- runFlow:
+    file: ../subflows/pick.yaml
+    env: { FIELD: category, OPTION: Transfer From Account }
+- runFlow:
+    file: ../subflows/pick.yaml
+    env: { FIELD: transferFromAccount, OPTION: Bank A }
+- runFlow:
+    file: ../subflows/pick.yaml
+    env: { FIELD: transferToAccount, OPTION: Wallet USD }
+- runFlow:
+    file: ../subflows/type.yaml
+    env: { ID: createTransaction.amount, TEXT: "5000000", CLEAR: "true" }
+- scrollUntilVisible:
+    element:
+      id: createTransaction.transferExchangeSwap
+- tapOn:
+    id: createTransaction.transferExchangeSwap
+- assertVisible: "Exchange Rate \\(USD 1 = IDR\\):"
+- runFlow:
+    file: ../subflows/type.yaml
+    env: { ID: createTransaction.transferExchangeRate, TEXT: "16250,75" }
+- assertVisible:
+    id: createTransaction.transferToAmount
+    text: "\\$ 307,68"
+- runFlow: ../subflows/save-transaction.yaml
+
+# --- Clear fields ------------------------------------------------------------
+- runFlow:
+    file: ../subflows/pick.yaml
+    env: { FIELD: category, OPTION: Food }
+- runFlow:
+    file: ../subflows/pick.yaml
+    env: { FIELD: account, OPTION: Bank B }
+- runFlow:
+    file: ../subflows/type.yaml
+    env: { ID: createTransaction.amount, TEXT: "1234" }
+- runFlow:
+    file: ../subflows/tap-expect.yaml
+    env: { ID: createTransaction.clear, EXPECT: confirm.ok }
+- tapOn:
+    id: confirm.ok
+- assertVisible:
+    id: createTransaction.amount
+    text: ""
+- assertVisible:
+    id: createTransaction.account
+    text: "Select account.*"
+
+# --- Re-picking the last-picked value still applies (bug #14, fixed 2026-10-06)
+# Between the two picks only on-screen buttons change the form, so the
+# selection screen returns the same values as last time; selectionNonce is
+# what makes createTransaction apply it anyway.
+- scrollUntilVisible:                    # scroll to the very top: a type button half under the status bar ignores taps
+    element:
+      id: createTransaction.bulkInsert
+    direction: UP
+- tapOn:
+    id: createTransaction.type.spending
+- runFlow:
+    file: ../subflows/pick.yaml
+    env: { FIELD: category, OPTION: Food }
+- assertVisible:
+    id: createTransaction.category
+    text: "Food.*"
+- tapOn:
+    id: createTransaction.type.income
+- tapOn:
+    id: createTransaction.type.spending
+- runFlow:
+    file: ../subflows/pick.yaml
+    env: { FIELD: category, OPTION: Food }
+- assertVisible:
+    id: createTransaction.category
+    text: "Food.*"
+
+# --- Balances reflect all three saves ---------------------------------------
+# Bank A: 10.000.000 + 100.000 - 50.000 - 5.000.000
+- runFlow:
+    file: ../subflows/check-balance.yaml
+    env: { NAME: Bank A, BALANCE: "Rp\\. 5\\.050\\.000" }
+- assertVisible: "Wallet USD"
+- tapOn:
+    id: "manageAccounts.balanceToggle.Wallet USD"
+- assertVisible: "\\$ 407,68"

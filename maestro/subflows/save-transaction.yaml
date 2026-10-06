@@ -1,0 +1,26 @@
+# Taps Save on Create Transaction, confirms, and checks the save went through.
+# Hide the keyboard BEFORE calling this: on Android, hideKeyboard with no
+# keyboard open presses Back and leaves the screen.
+appId: io.github.josach07.nettkeeping
+---
+- runFlow:
+    file: tap-expect.yaml
+    env: { ID: createTransaction.save, EXPECT: confirm.ok }
+- tapOn:
+    id: confirm.ok
+# The success popup auto-hides after 3 s and an investment save can take
+# about that long on the A9, so it is easy to miss. Wait for the "Saving..."
+# info popup to go away instead, then make sure no error is showing.
+- extendedWaitUntil:
+    notVisible:
+      id: popup.info
+    timeout: 15000
+- assertNotVisible:
+    id: popup.danger
+- runFlow:
+    when:
+      visible:
+        id: popup.success
+    commands:
+      - tapOn:
+          id: popup.success

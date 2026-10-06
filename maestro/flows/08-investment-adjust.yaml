@@ -1,0 +1,132 @@
+# Investment Adjust (October): add/remove units and revalue without a
+# transaction; adjustments are editable and deletable from the history screens.
+appId: io.github.josach07.nettkeeping
+name: 08 Investment Adjust
+tags: [investments]
+---
+- runFlow: ../subflows/seed-basics.yaml
+- tapOn:
+    id: nav.settings
+- tapOn:
+    id: settings.investments
+- runFlow:
+    file: ../subflows/add-investment.yaml
+    env: { NAME: Stock A, CURRENCY: IDR, UNIT: "", DECIMALS: "0", QUANTITY: "10", VPU: "1000" }
+- tapOn:
+    id: "manageInvestments.view.Stock A"
+
+# --- Add 5 units at a new value per unit, with a note ------------------------
+- scrollUntilVisible:
+    element:
+      id: "investments.adjust.Stock A"
+- tapOn:
+    id: "investments.adjust.Stock A"
+- assertVisible:
+    id: investmentAdjust.date
+    text: ".*\\d{4}.*"
+- tapOn:
+    id: investmentAdjust.add
+- tapOn:
+    id: investmentAdjust.quantity
+- inputText: "5"
+- hideKeyboard
+- tapOn:
+    id: investmentAdjust.unitValue
+- inputText: "1200"
+- hideKeyboard
+- tapOn:
+    id: investmentAdjust.note
+- inputText: bonus shares
+- hideKeyboard
+- scrollUntilVisible:              # the Adjust panel is taller than the A9 screen
+    element:
+      id: investmentAdjust.save
+- waitForAnimationToEnd                  # the panel re-centres after the keyboard closes; tap once it settles
+- tapOn:
+    id: investmentAdjust.save
+- assertNotVisible:
+    id: investmentAdjust.save
+
+# --- History shows it as an Adjustment, with the note ------------------------
+- scrollUntilVisible:
+    element:
+      id: "investments.quantityHistory.Stock A"
+- tapOn:
+    id: "investments.quantityHistory.Stock A"
+# Newest first: the adjustment above the opening entry.
+- assertVisible:
+    id: investmentQuantityHistory.row.0.kind
+    text: "Adjustment"
+- assertVisible:
+    id: investmentQuantityHistory.row.0.amount
+    text: "\\+5"
+- assertVisible:
+    id: investmentQuantityHistory.row.1.kind
+    text: "Opening"
+- assertVisible:
+    id: investmentQuantityHistory.row.1.amount
+    text: "10"
+- assertVisible: "bonus shares"
+
+# --- Edit the adjustment from the history row --------------------------------
+- tapOn:
+    id: investmentQuantityHistory.edit.0
+- assertVisible: "Edit Adjustment.*"
+- tapOn:
+    id: investmentAdjust.note
+- eraseText: 30
+- inputText: split
+- hideKeyboard
+- scrollUntilVisible:              # the Adjust panel is taller than the A9 screen
+    element:
+      id: investmentAdjust.save
+- waitForAnimationToEnd                  # the panel re-centres after the keyboard closes; tap once it settles
+- tapOn:
+    id: investmentAdjust.save
+- assertVisible: "split"
+- assertNotVisible: "bonus shares"
+
+# --- Removing more than held is refused --------------------------------------
+- tapOn:
+    id: investmentQuantityHistory.edit.0
+- tapOn:
+    id: investmentAdjust.remove
+- tapOn:
+    id: investmentAdjust.quantity
+- eraseText: 10
+- inputText: "50"
+- hideKeyboard
+- scrollUntilVisible:              # the Adjust panel is taller than the A9 screen
+    element:
+      id: investmentAdjust.save
+- waitForAnimationToEnd                  # the panel re-centres after the keyboard closes; tap once it settles
+- tapOn:
+    id: investmentAdjust.save
+- assertVisible:
+    id: popup.danger
+- tapOn:
+    id: popup.danger
+- scrollUntilVisible:
+    element:
+      id: investmentAdjust.cancel
+- tapOn:
+    id: investmentAdjust.cancel
+
+# --- Delete the adjustment ---------------------------------------------------
+- tapOn:
+    id: investmentQuantityHistory.delete.0
+- assertVisible: "Delete Adjustment"
+- tapOn:
+    id: deleteAdjustment.confirm
+- assertNotVisible:
+    id: investmentQuantityHistory.row.1
+- assertNotVisible: "split"
+
+# --- Opening entry is not editable from history ------------------------------
+- assertVisible:
+    id: investmentQuantityHistory.row.0.kind
+    text: "Opening"
+- assertNotVisible:
+    id: investmentQuantityHistory.edit.0
+- assertNotVisible:
+    id: investmentQuantityHistory.delete.0

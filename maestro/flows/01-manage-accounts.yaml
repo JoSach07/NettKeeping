@@ -1,0 +1,146 @@
+# FCT sheet: Manage Accounts Screen
+appId: io.github.josach07.nettkeeping
+name: 01 Manage Accounts
+tags: [accounts]
+---
+- runFlow: ../subflows/launch-fresh.yaml
+- tapOn:
+    id: nav.settings
+- tapOn:
+    id: settings.accounts
+
+# --- Add new account ---------------------------------------------------------
+# FCT bug: on a decimal currency the 5th digit turned the grouping '.' into a
+# decimal point (50000 -> 5.000 -> 5,0000). Type it, blur, refocus, blur again.
+- tapOn:
+    id: manageAccounts.add
+- tapOn:
+    id: manageAccounts.form.name
+- inputText: Wallet USD
+- tapOn:
+    id: manageAccounts.form.currency
+- tapOn:
+    id: picker.search
+- inputText: USD
+- hideKeyboard
+- tapOn:
+    id: "picker.option.USD - .*"
+- tapOn:
+    id: manageAccounts.form.balance
+- inputText: "50000"
+- tapOn:
+    id: manageAccounts.form.name          # blur the balance field
+- hideKeyboard
+- assertVisible:
+    id: manageAccounts.form.balance
+    text: "50\\.000"
+- tapOn:
+    id: manageAccounts.form.balance
+- assertVisible:
+    id: manageAccounts.form.balance
+    text: "50000"                         # raw while focused (keyboard still up)
+- hideKeyboard                            # closing the keyboard now blurs the field (#22 fix)
+- assertVisible:
+    id: manageAccounts.form.balance
+    text: "50\\.000"
+- tapOn:
+    id: manageAccounts.form.save
+- assertVisible:
+    id: "manageAccounts.row.Wallet USD"
+
+# --- Display account balance -------------------------------------------------
+- assertVisible: "\\$ •+"                 # hidden by default
+- tapOn:
+    id: "manageAccounts.balanceToggle.Wallet USD"
+- assertVisible: "\\$ 50\\.000,00"
+- tapOn:
+    id: "manageAccounts.balanceToggle.Wallet USD"
+- assertNotVisible: "\\$ 50\\.000,00"
+
+# --- Edit unmutated account (name and balance both editable) -----------------
+- tapOn:
+    id: "manageAccounts.edit.Wallet USD"
+- assertVisible:
+    id: manageAccounts.form.balance
+    enabled: true
+- tapOn:
+    id: manageAccounts.form.name
+- eraseText: 20
+- inputText: Cash USD
+- hideKeyboard                           # keyboard covers the balance field
+- tapOn:
+    id: manageAccounts.form.balance
+- eraseText: 20
+- inputText: "75"
+- hideKeyboard
+- tapOn:
+    id: manageAccounts.form.save
+- assertVisible:
+    id: "manageAccounts.row.Cash USD"
+- assertNotVisible:
+    id: "manageAccounts.row.Wallet USD"
+- tapOn:
+    id: "manageAccounts.balanceToggle.Cash USD"
+- assertVisible: "\\$ 75,00"
+
+# --- Delete unmutated account ------------------------------------------------
+- tapOn:
+    id: "manageAccounts.delete.Cash USD"
+- tapOn:
+    id: manageAccounts.deleteConfirm
+- assertNotVisible:
+    id: "manageAccounts.row.Cash USD"
+
+# --- Mutated accounts: set up two IDR accounts and a transfer -----------------
+- runFlow:
+    file: ../subflows/add-account.yaml
+    env: { NAME: Bank A, CURRENCY: IDR, BALANCE: "1000000" }
+- runFlow:
+    file: ../subflows/add-account.yaml
+    env: { NAME: Bank B, CURRENCY: IDR, BALANCE: "500000" }
+- runFlow:
+    file: ../subflows/create-transfer.yaml
+    env: { FROM: Bank A, TO: Bank B, AMOUNT: "250000" }
+
+# --- Edit mutated account: balance and currency locked, name still editable --
+- tapOn:
+    id: nav.settings
+- tapOn:
+    id: settings.accounts
+- tapOn:
+    id: "manageAccounts.edit.Bank A"
+- assertVisible: "Balance and currency are locked because this account already has transactions\\."
+- assertVisible:
+    id: manageAccounts.form.balance
+    enabled: false
+- assertVisible:
+    id: manageAccounts.form.currency
+    enabled: false
+- tapOn:
+    id: manageAccounts.form.cancel
+
+# --- Delete mutated account --------------------------------------------------
+# FCT bug: deleting Bank B blanked the transfer's To Account ("choose an
+# account"). It is a soft delete, so the transfer must keep showing Bank B.
+- tapOn:
+    id: "manageAccounts.delete.Bank B"
+- tapOn:
+    id: manageAccounts.deleteConfirm
+- assertNotVisible:
+    id: "manageAccounts.row.Bank B"
+- tapOn:
+    id: nav.accounts
+- tapOn:
+    id: "accounts.card.Bank A"
+- scrollUntilVisible:
+    element:
+      id: "accounts.allTransactions.Bank A"
+- tapOn:
+    id: "accounts.allTransactions.Bank A"
+- tapOn:
+    id: "accountTransactions.edit.*"
+    index: 0
+- assertVisible:
+    id: createTransaction.transferToAccount
+    text: "Bank B.*"
+- assertVisible: "This account has been removed\\."

@@ -1,0 +1,39 @@
+# Bulk insert (August-September). Downloading the template and uploading a
+# file both go through the Android file picker, so only the dialog is checked
+# here; the import itself is on the manual checklist.
+appId: io.github.josach07.nettkeeping
+name: 13 Bulk Insert
+tags: [bulk-insert]
+---
+- runFlow: ../subflows/seed-basics.yaml
+- tapOn:
+    id: nav.create
+- tapOn:
+    id: createTransaction.bulkInsert
+- assertVisible:
+    id: bulkInsert.downloadTemplate
+- assertVisible:
+    id: bulkInsert.upload
+- tapOn:
+    id: bulkInsert.close
+- assertNotVisible:
+    id: bulkInsert.upload
+# Hidden while editing a transaction: bulk insert only ever creates new rows.
+- runFlow:
+    file: ../subflows/create-simple.yaml
+    env: { TYPE: spending, CATEGORY: Food, ACCOUNT: Bank A, AMOUNT: "1000" }
+- tapOn:
+    id: nav.accounts
+- tapOn:
+    id: "accounts.card.Bank A"
+- scrollUntilVisible:
+    element:
+      id: "accounts.allTransactions.Bank A"
+- tapOn:
+    id: "accounts.allTransactions.Bank A"
+- tapOn:
+    id: "accountTransactions.edit.*"
+    index: 0
+- assertVisible: "Edit Transaction"
+- assertNotVisible:
+    id: createTransaction.bulkInsert

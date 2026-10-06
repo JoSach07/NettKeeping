@@ -1,0 +1,54 @@
+# Starts and ends on Manage Investments. Category stays General.
+# env: NAME, CURRENCY, UNIT ("" for none), DECIMALS (0-8), QUANTITY, VPU
+appId: io.github.josach07.nettkeeping
+---
+- tapOn:
+    id: manageInvestments.add
+- tapOn:
+    id: manageInvestments.form.name
+- inputText: ${NAME}
+- hideKeyboard
+- tapOn:
+    id: manageInvestments.form.currency
+- tapOn:
+    id: picker.search
+- inputText: ${CURRENCY}
+- hideKeyboard
+- tapOn:
+    id: "picker.option.${CURRENCY} - .*"
+- runFlow:
+    when:
+      true: ${UNIT != ''}
+    commands:
+      - tapOn:
+          id: manageInvestments.form.unit
+      - inputText: ${UNIT}
+      - hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: manageInvestments.form.decimals
+- tapOn:
+    id: manageInvestments.form.decimals
+- tapOn:
+    id: "picker.option.${DECIMALS} .*"
+- scrollUntilVisible:
+    element:
+      id: manageInvestments.form.quantity
+- tapOn:
+    id: manageInvestments.form.quantity
+- inputText: ${QUANTITY}
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: manageInvestments.form.unitValue
+- tapOn:
+    id: manageInvestments.form.unitValue
+- inputText: ${VPU}
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: manageInvestments.form.save
+- tapOn:
+    id: manageInvestments.form.save
+- assertVisible:
+    id: "manageInvestments.edit.${NAME}"

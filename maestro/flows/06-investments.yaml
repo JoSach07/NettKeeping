@@ -1,0 +1,121 @@
+# FCT sheet: Investment Screen
+appId: io.github.josach07.nettkeeping
+name: 06 Investments
+tags: [investments]
+---
+- runFlow: ../subflows/seed-basics.yaml
+- tapOn:
+    id: nav.settings
+- tapOn:
+    id: settings.investments
+- runFlow:
+    file: ../subflows/add-investment.yaml
+    env: { NAME: Gold, CURRENCY: IDR, UNIT: gram, DECIMALS: "2", QUANTITY: "0", VPU: "0" }
+# A buy, then a back-dated edit of it. FCT bugs: editing a buy's date made a
+# second history entry (5 then 5; value 500 then 0). There must be ONE entry.
+- runFlow:
+    file: ../subflows/create-investment-buy.yaml
+    env: { ACCOUNT: Bank A, INVESTMENT: Gold, QUANTITY: "5", VPU: "500" }
+- tapOn:
+    id: nav.accounts
+- tapOn:
+    id: "accounts.card.Bank A"
+- scrollUntilVisible:
+    element:
+      id: "accounts.allTransactions.Bank A"
+- tapOn:
+    id: "accounts.allTransactions.Bank A"
+- tapOn:
+    id: "accountTransactions.edit.*"
+    index: 0
+- scrollUntilVisible:
+    element:
+      id: createTransaction.date
+- tapOn:
+    id: createTransaction.date
+- tapOn:
+    id: calendar.prev
+- tapOn:
+    id: calendar.day.3
+- runFlow:
+    file: ../subflows/tap-expect.yaml
+    env: { ID: createTransaction.save, EXPECT: confirm.ok }
+- tapOn:
+    id: confirm.ok
+- extendedWaitUntil:
+    visible:
+      id: accountTransactions.list
+    timeout: 15000
+
+# --- Manage button + collapsible card ----------------------------------------
+- tapOn:
+    id: nav.investments
+- tapOn:
+    id: investments.manage
+- assertVisible:
+    id: manageInvestments.add
+- tapOn:
+    id: manageInvestments.back
+- tapOn:
+    id: investments.card.Gold
+- assertVisible:
+    id: investments.chart.vpu.Gold
+- assertVisible:
+    id: investments.chart.total.Gold
+- tapOn:
+    id: investments.range.1m
+- tapOn:
+    id: investments.range.ytd
+- tapOn:
+    id: investments.range.1y
+- takeScreenshot: "${typeof SHOTS !== 'undefined' ? SHOTS : 'maestro/screenshots'}/06-gold-charts-1y"
+# FCT: quantity chart added, titled with the unit.
+- scrollUntilVisible:
+    element:
+      id: investments.chart.quantity.Gold
+- assertVisible: "Quantity \\(gram\\)"
+
+# --- Quantity history: one entry with a delta ---------------------------------
+- scrollUntilVisible:
+    element:
+      id: investments.quantityHistory.Gold
+- tapOn:
+    id: investments.quantityHistory.Gold
+- assertVisible:
+    id: investmentQuantityHistory.row.0.kind
+    text: "Buy"
+- assertVisible:
+    id: investmentQuantityHistory.row.0.amount
+    text: "\\+5"
+- assertVisible: "03 .*"                 # back-dated to the 3rd
+- assertNotVisible:
+    id: investmentQuantityHistory.row.1
+- tapOn:
+    id: investmentQuantityHistory.back
+
+# --- Value history: one entry, at 500 ----------------------------------------
+- tapOn:
+    id: investments.valueHistory.Gold
+- assertVisible:
+    id: investmentValueHistory.row.0.kind
+    text: "Buy"
+- assertVisible:
+    id: investmentValueHistory.row.0.amount
+    text: "Rp\\. 500"
+- assertVisible: "03 .*"
+- assertNotVisible: "Rp\\. 0"
+- assertNotVisible:
+    id: investmentValueHistory.row.1
+- tapOn:
+    id: investmentValueHistory.back
+
+# --- Export dialog (export itself is manual) ---------------------------------
+- scrollUntilVisible:
+    element:
+      id: investments.export.Gold
+- tapOn:
+    id: investments.export.Gold
+- assertVisible:
+    id: excelExport.confirm
+- tapOn:
+    id: excelExport.cancel

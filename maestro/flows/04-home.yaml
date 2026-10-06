@@ -1,0 +1,127 @@
+# FCT sheet: Home Screen
+appId: io.github.josach07.nettkeeping
+name: 04 Home
+tags: [home]
+---
+- runFlow: ../subflows/seed-basics.yaml
+- tapOn:
+    id: nav.settings
+- tapOn:
+    id: settings.transactionCategories
+- runFlow:
+    file: ../subflows/add-category.yaml
+    env: { NAME: Coffee, TYPE: Spending }
+- runFlow:
+    file: ../subflows/create-simple.yaml
+    env: { TYPE: spending, CATEGORY: Food, ACCOUNT: Bank A, AMOUNT: "1000000" }
+- runFlow:
+    file: ../subflows/create-simple.yaml
+    env: { TYPE: spending, CATEGORY: Coffee, ACCOUNT: Bank A, AMOUNT: "5000" }
+- runFlow:
+    file: ../subflows/create-simple.yaml
+    env: { TYPE: income, CATEGORY: Salary, ACCOUNT: Bank A, AMOUNT: "2000000" }
+- tapOn:
+    id: nav.home
+
+# --- Accounts card: donut + breakdown ----------------------------------------
+- assertVisible:
+    id: home.account
+    text: "Bank A.*"
+- tapOn:
+    id: home.mode.spending
+- assertVisible:
+    id: home.donut
+- assertVisible:
+    id: home.breakdown.row.Food
+- assertVisible:
+    id: home.breakdown.row.Coffee
+# FCT: a category that was used but is under 1% showed "0%". 5.000 / 1.005.000
+- assertVisible:
+    text: "<1%"
+    below:
+      id: home.breakdown.row.Food
+- takeScreenshot: "${typeof SHOTS !== 'undefined' ? SHOTS : 'maestro/screenshots'}/04-home-spending"
+
+- tapOn:
+    id: home.mode.income
+- assertVisible:
+    id: home.breakdown.row.Salary
+- assertNotVisible:
+    id: home.breakdown.row.Food
+
+# --- View all, with its own Spending / Income toggle (FCT) -------------------
+- tapOn:
+    id: home.breakdown.viewAll
+- assertVisible:
+    id: categoryBreakdown.mode.spending
+- tapOn:
+    id: categoryBreakdown.mode.income
+- assertVisible:
+    id: categoryBreakdown.row.Salary
+- assertNotVisible:
+    id: categoryBreakdown.row.Food
+- tapOn:
+    id: categoryBreakdown.mode.spending
+- assertVisible:
+    id: categoryBreakdown.row.Food
+- assertVisible:
+    id: categoryBreakdown.row.Coffee
+- tapOn:
+    id: categoryBreakdown.back
+
+# --- Month picker: an empty month shows the empty state ----------------------
+- tapOn:
+    id: home.month
+- tapOn:
+    id: home.month.prevYear
+- tapOn:
+    id: home.month.1
+- assertVisible:
+    id: home.month
+    text: "January \\d{4}.*"
+- tapOn:
+    id: home.mode.spending
+- assertVisible: "No spending recorded for this month\\."
+
+# --- Account picker ----------------------------------------------------------
+- tapOn:
+    id: home.account
+- tapOn:
+    id: "picker.option.Wallet USD"
+- assertVisible:
+    id: home.account
+    text: "Wallet USD.*"
+
+# --- Investment card ---------------------------------------------------------
+- scrollUntilVisible:
+    element:
+      id: home.investmentChart
+- assertVisible: "Add an investment to see value history\\."
+- tapOn:
+    id: home.range.1m
+- tapOn:
+    id: home.range.ytd
+- tapOn:
+    id: home.range.1y
+- tapOn:
+    id: home.range.1w
+
+# --- Export dialog (the export itself needs the folder picker: manual) -------
+- scrollUntilVisible:
+    element:
+      id: home.export
+    direction: UP
+- tapOn:
+    id: home.export
+- tapOn:
+    id: excelExport.mode.monthly
+- assertVisible:
+    id: excelExport.month
+- tapOn:
+    id: excelExport.mode.yearly
+- assertVisible:
+    id: excelExport.prevYear
+- tapOn:
+    id: excelExport.cancel
+- assertNotVisible:
+    id: excelExport.confirm

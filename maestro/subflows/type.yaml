@@ -1,0 +1,22 @@
+# Scrolls a text field to the middle of the screen, focuses it, types, and
+# closes the keyboard. Fails loudly if the field did not take focus: typing
+# into nothing and then calling hideKeyboard would press Back instead.
+# env: ID, TEXT, CLEAR (optional, "true" to erase the current value first)
+appId: io.github.josach07.nettkeeping
+---
+- scrollUntilVisible:
+    element:
+      id: ${ID}
+    centerElement: true
+- tapOn:
+    id: ${ID}
+- assertVisible:
+    id: ${ID}
+    focused: true
+- runFlow:
+    when:
+      true: ${typeof CLEAR !== 'undefined' && CLEAR == 'true'}
+    commands:
+      - eraseText: 30
+- inputText: ${TEXT}
+- hideKeyboard

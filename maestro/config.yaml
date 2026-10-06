@@ -1,0 +1,5 @@
+# Run the whole suite:  maestro test maestro/flows
+# One file:             maestro test maestro/flows/01-manage-accounts.yaml
+# Run from the repo root: screenshots are written to maestro/screenshots/.
+flows:
+  - "flows/*"

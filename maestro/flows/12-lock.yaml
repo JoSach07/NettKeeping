@@ -1,0 +1,163 @@
+# FCT sheet: Settings Screen, PIN rows: set up PIN, reset PIN with the
+# recovery code. Biometrics stays manual (Maestro cannot use a fingerprint).
+appId: io.github.josach07.nettkeeping
+name: 12 PIN Lock
+tags: [settings, security]
+---
+- runFlow: ../subflows/launch-fresh.yaml
+- tapOn:
+    id: nav.settings
+
+# --- Set up PIN: validation, then the one-time recovery code -----------------
+- scrollUntilVisible:
+    element:
+      id: settings.pin
+- tapOn:
+    id: settings.pin
+- tapOn:
+    id: settings.pinForm.pin
+- inputText: "12"
+- tapOn:
+    id: settings.pinForm.confirmPin
+- inputText: "12"
+- hideKeyboard
+- tapOn:
+    id: settings.pinForm.save
+- assertVisible: "PIN must be 4 to 12 digits\\."
+- tapOn:
+    id: settings.pinForm.pin
+- eraseText: 12
+- inputText: "1234"
+- tapOn:
+    id: settings.pinForm.confirmPin
+- eraseText: 12
+- inputText: "1235"
+- hideKeyboard
+- tapOn:
+    id: settings.pinForm.save
+- assertVisible: "PIN confirmation does not match\\."
+- tapOn:
+    id: settings.pinForm.confirmPin
+- eraseText: 12
+- inputText: "1234"
+- hideKeyboard
+- tapOn:
+    id: settings.pinForm.save
+- extendedWaitUntil:                     # PBKDF2 at 100k iterations takes a moment
+    visible:
+      id: settings.recovery.code
+    timeout: 30000
+- copyTextFrom:
+    id: settings.recovery.code
+# The displayed code carries invisible U+200B break points after each dash;
+# strip them, since inputText can't type non-ASCII reliably.
+- evalScript: ${output.recoveryCode = maestro.copiedText.replace(/\u200B/g, '')}
+- tapOn:
+    id: settings.recovery.done
+- assertVisible:
+    id: settings.pin.switch
+    checked: true
+
+# --- Relaunch: locked; wrong PIN refused, right PIN unlocks -------------------
+- launchApp:
+    stopApp: true
+- extendedWaitUntil:
+    visible:
+      id: lock.pin
+    timeout: 15000
+- tapOn:
+    id: lock.pin
+- inputText: "9999"
+- tapOn:
+    id: lock.unlock
+- extendedWaitUntil:
+    visible:
+      id: lock.pin
+    timeout: 30000
+- assertNotVisible:
+    id: nav.home
+- tapOn:
+    id: lock.pin
+- inputText: "1234"
+- tapOn:
+    id: lock.unlock
+- extendedWaitUntil:
+    visible:
+      id: nav.home
+    timeout: 30000
+
+# --- Forgot PIN: recovery code, new PIN, new recovery code -------------------
+- launchApp:
+    stopApp: true
+- extendedWaitUntil:
+    visible:
+      id: lock.forgot
+    timeout: 15000
+- tapOn:
+    id: lock.forgot
+- tapOn:
+    id: lock.recoveryCode
+- inputText: ${output.recoveryCode}
+- hideKeyboard
+- tapOn:
+    id: lock.verifyRecovery
+- extendedWaitUntil:
+    visible:
+      id: lock.newPin
+    timeout: 30000
+- tapOn:
+    id: lock.newPin
+- inputText: "5678"
+- tapOn:
+    id: lock.confirmNewPin
+- inputText: "5678"
+- hideKeyboard
+- tapOn:
+    id: lock.saveNewPin
+- extendedWaitUntil:
+    visible:
+      id: lock.recoveryDone
+    timeout: 30000
+- tapOn:
+    id: lock.recoveryDone
+- extendedWaitUntil:
+    visible:
+      id: nav.home
+    timeout: 15000
+
+# --- The new PIN works -------------------------------------------------------
+- launchApp:
+    stopApp: true
+- extendedWaitUntil:
+    visible:
+      id: lock.pin
+    timeout: 15000
+- tapOn:
+    id: lock.pin
+- inputText: "5678"
+- tapOn:
+    id: lock.unlock
+- extendedWaitUntil:
+    visible:
+      id: nav.home
+    timeout: 30000
+
+# --- Disable PIN -------------------------------------------------------------
+- tapOn:
+    id: nav.settings
+- scrollUntilVisible:
+    element:
+      id: settings.pin
+- tapOn:
+    id: settings.pin
+- tapOn:
+    id: settings.pinForm.currentPin
+- inputText: "5678"
+- hideKeyboard
+- tapOn:
+    id: settings.pinForm.save
+- extendedWaitUntil:
+    visible:
+      id: settings.pin.switch
+      checked: false
+    timeout: 30000

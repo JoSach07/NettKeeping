@@ -1,0 +1,56 @@
+{
+  "expo": {
+    "name": "NettKeeping",
+    "slug": "nettkeeping",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/nettkeeping-icon.png",
+    "scheme": "nettkeeping",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "package": "io.github.josach07.nettkeeping",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/nettkeeping-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "permissions": [
+        "android.permission.USE_BIOMETRIC",
+        "android.permission.USE_FINGERPRINT"
+      ],
+      "allowBackup": false
+    },
+    "plugins": [
+      "expo-router",
+      "expo-sqlite",
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Allow NettKeeping to use Face ID for app unlock."
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/nettkeeping-splash.png",
+          "resizeMode": "contain",
+          "backgroundColor": "#051710"
+        }
+      ],
+      "expo-secure-store",
+      "react-native-quick-crypto"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "2f303a0d-8d80-4f90-a0cf-883f9f827375"
+      }
+    },
+    "owner": "josach07"
+  }
+}

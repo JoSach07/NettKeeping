@@ -1,0 +1,9 @@
+# Wipes NettKeeping's data and starts on Home. Every flow starts here.
+appId: io.github.josach07.nettkeeping
+---
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible:
+      id: nav.home
+    timeout: 15000

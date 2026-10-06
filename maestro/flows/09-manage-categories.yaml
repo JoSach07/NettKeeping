@@ -1,0 +1,175 @@
+# FCT sheet: Manage Categories Screen
+appId: io.github.josach07.nettkeeping
+name: 09 Manage Categories
+tags: [categories]
+---
+- runFlow: ../subflows/seed-basics.yaml
+- tapOn:
+    id: nav.settings
+- tapOn:
+    id: settings.transactionCategories
+
+# --- Seeded categories cannot be edited or deleted ---------------------------
+- scrollUntilVisible:
+    timeout: 60000                       # long lists scroll slowly on the A9
+    element:
+      id: "manageCategories.edit.Investment Liquidation"
+- assertVisible:
+    id: "manageCategories.edit.Investment Liquidation"
+    enabled: false
+- scrollUntilVisible:
+    timeout: 60000                       # long lists scroll slowly on the A9
+    element:
+      id: "manageCategories.delete.Investment"
+- assertVisible:
+    id: "manageCategories.delete.Investment"
+    enabled: false
+
+# --- Add, then change the colour of an unused category -----------------------
+- runFlow:
+    file: ../subflows/add-category.yaml
+    env: { NAME: Freelance, TYPE: Income }
+- scrollUntilVisible:
+    timeout: 60000                       # long lists scroll slowly on the A9
+    element:
+      id: manageCategories.color.Freelance
+- tapOn:
+    id: manageCategories.color.Freelance
+- tapOn:
+    id: manageCategories.colorForm.hex
+- eraseText: 10
+- inputText: "#1E88E5"
+- hideKeyboard
+- scrollUntilVisible:
+    timeout: 60000                       # long lists scroll slowly on the A9
+    element:
+      id: manageCategories.colorForm.save
+- tapOn:
+    id: manageCategories.colorForm.save
+- assertNotVisible:
+    id: manageCategories.colorForm.save
+
+# --- Edit and delete an unused category --------------------------------------
+- runFlow:
+    file: ../subflows/add-category.yaml
+    env: { NAME: Temp, TYPE: Spending }
+- scrollUntilVisible:
+    timeout: 60000                       # long lists scroll slowly on the A9
+    element:
+      id: manageCategories.edit.Temp
+- tapOn:
+    id: manageCategories.edit.Temp
+- assertVisible:
+    id: manageCategories.form.type
+    enabled: false                      # type is fixed once created
+- tapOn:
+    id: manageCategories.form.name
+- eraseText: 10
+- inputText: Temp2
+- hideKeyboard
+- scrollUntilVisible:
+    timeout: 60000                       # long lists scroll slowly on the A9
+    element:
+      id: manageCategories.form.save
+- tapOn:
+    id: manageCategories.form.save
+- scrollUntilVisible:
+    timeout: 60000                       # long lists scroll slowly on the A9
+    element:
+      id: manageCategories.edit.Temp2
+- assertVisible:
+    id: manageCategories.edit.Temp2
+- scrollUntilVisible:
+    timeout: 60000                       # long lists scroll slowly on the A9
+    element:
+      id: manageCategories.delete.Temp2
+- tapOn:
+    id: manageCategories.delete.Temp2
+- assertVisible: "This category will be removed from future selection\\."
+- tapOn:
+    id: manageCategories.deleteConfirm
+- assertNotVisible:
+    id: manageCategories.edit.Temp2
+
+# --- Used category: colour + edit + delete with replacement ------------------
+- runFlow:
+    file: ../subflows/create-simple.yaml
+    env: { TYPE: income, CATEGORY: Salary, ACCOUNT: Bank A, AMOUNT: "100000" }
+- tapOn:
+    id: nav.settings
+- tapOn:
+    id: settings.transactionCategories
+- scrollUntilVisible:
+    timeout: 60000                       # long lists scroll slowly on the A9
+    element:
+      id: manageCategories.color.Salary
+- tapOn:
+    id: manageCategories.color.Salary
+- tapOn:
+    id: manageCategories.colorForm.hex
+- eraseText: 10
+- inputText: "#43A047"
+- hideKeyboard
+- scrollUntilVisible:
+    timeout: 60000                       # long lists scroll slowly on the A9
+    element:
+      id: manageCategories.colorForm.save
+- tapOn:
+    id: manageCategories.colorForm.save
+- scrollUntilVisible:
+    timeout: 60000                       # long lists scroll slowly on the A9
+    element:
+      id: manageCategories.edit.Salary
+- tapOn:
+    id: manageCategories.edit.Salary
+- tapOn:
+    id: manageCategories.form.name
+- eraseText: 10
+- inputText: Wages
+- hideKeyboard
+- scrollUntilVisible:
+    timeout: 60000                       # long lists scroll slowly on the A9
+    element:
+      id: manageCategories.form.save
+- tapOn:
+    id: manageCategories.form.save
+- scrollUntilVisible:
+    timeout: 60000                       # long lists scroll slowly on the A9
+    element:
+      id: manageCategories.edit.Wages
+- assertVisible:
+    id: manageCategories.edit.Wages
+# FCT: seeded categories must not be offered as a replacement.
+- scrollUntilVisible:
+    timeout: 60000                       # long lists scroll slowly on the A9
+    element:
+      id: manageCategories.delete.Wages
+- tapOn:
+    id: manageCategories.delete.Wages
+- assertVisible: "1 transaction uses this income category\\..*"
+- scrollUntilVisible:
+    timeout: 60000                       # long lists scroll slowly on the A9
+    element:
+      id: manageCategories.delete.replacement
+- tapOn:
+    id: manageCategories.delete.replacement
+- assertVisible:
+    id: picker.option.Freelance
+- assertNotVisible:
+    id: "picker.option.Transfer Into Account"
+- assertNotVisible:
+    id: "picker.option.Investment Liquidation"
+- tapOn:
+    id: picker.option.Freelance
+- tapOn:
+    id: manageCategories.deleteConfirm
+- assertNotVisible:
+    id: manageCategories.edit.Wages
+
+# The transaction moved to Freelance.
+- tapOn:
+    id: nav.home
+- tapOn:
+    id: home.mode.income
+- assertVisible:
+    id: home.breakdown.row.Freelance

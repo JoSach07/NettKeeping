@@ -1,0 +1,36 @@
+# Fresh install plus the shared test data, ending on Home:
+#   Categories: Food (Spending), on top of the fresh-install starter set
+#               (which already includes Salary and Bonus, among others)
+#   Accounts:   Bank A (IDR 10.000.000), Bank B (IDR 500.000), Wallet USD (USD 100)
+appId: io.github.josach07.nettkeeping
+---
+- runFlow: launch-fresh.yaml
+- tapOn:
+    id: nav.settings
+- tapOn:
+    id: settings.transactionCategories
+- runFlow:
+    file: add-category.yaml
+    env: { NAME: Food, TYPE: Spending }
+- scrollUntilVisible:                    # add-category leaves the list scrolled down to the new row
+    timeout: 60000                       # long lists scroll slowly on the A9
+    element:
+      id: manageCategories.back
+    direction: UP
+- tapOn:
+    id: manageCategories.back
+- tapOn:
+    id: settings.accounts
+- runFlow:
+    file: add-account.yaml
+    env: { NAME: Bank A, CURRENCY: IDR, BALANCE: "10000000" }
+- runFlow:
+    file: add-account.yaml
+    env: { NAME: Bank B, CURRENCY: IDR, BALANCE: "500000" }
+- runFlow:
+    file: add-account.yaml
+    env: { NAME: Wallet USD, CURRENCY: USD, BALANCE: "100" }
+- tapOn:
+    id: manageAccounts.back
+- tapOn:
+    id: nav.home

@@ -1,0 +1,17 @@
+# Opens a Create Transaction select field and picks an option.
+# env: FIELD (category | account | transferFromAccount | transferToAccount | investment), OPTION
+appId: io.github.josach07.nettkeeping
+---
+- scrollUntilVisible:
+    timeout: 60000                       # long lists scroll slowly on the A9
+    element:
+      id: "createTransaction.${FIELD}"
+    direction: UP
+- tapOn:
+    id: "createTransaction.${FIELD}"
+- scrollUntilVisible:                    # the starter categories make the list long
+    timeout: 60000                       # long lists scroll slowly on the A9
+    element:
+      id: "selectTransactionField.option.${OPTION}"
+- tapOn:
+    id: "selectTransactionField.option.${OPTION}"

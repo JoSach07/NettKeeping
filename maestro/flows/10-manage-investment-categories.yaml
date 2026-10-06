@@ -1,0 +1,121 @@
+# FCT sheet: Manage Investment Category
+appId: io.github.josach07.nettkeeping
+name: 10 Manage Investment Categories
+tags: [categories, investments]
+---
+- runFlow: ../subflows/launch-fresh.yaml
+- tapOn:
+    id: nav.settings
+- tapOn:
+    id: settings.investmentCategories
+
+# --- Add, edit, delete unused ------------------------------------------------
+- tapOn:
+    id: manageInvestmentCategories.add
+- tapOn:
+    id: manageInvestmentCategories.form.name
+- inputText: Metals
+- hideKeyboard
+- tapOn:
+    id: manageInvestmentCategories.form.save
+- assertVisible:
+    id: manageInvestmentCategories.edit.Metals
+- tapOn:
+    id: manageInvestmentCategories.add
+- tapOn:
+    id: manageInvestmentCategories.form.name
+- inputText: Shares               # not a seeded name (see the InvestmentCategories seed in dbService)
+- hideKeyboard
+- tapOn:
+    id: manageInvestmentCategories.form.save
+- tapOn:
+    id: manageInvestmentCategories.edit.Shares
+- tapOn:
+    id: manageInvestmentCategories.form.name
+- eraseText: 10
+- inputText: Equity
+- hideKeyboard
+- tapOn:
+    id: manageInvestmentCategories.form.save
+- assertVisible:
+    id: manageInvestmentCategories.edit.Equity
+- tapOn:
+    id: manageInvestmentCategories.delete.Equity
+- tapOn:
+    id: manageInvestmentCategories.deleteConfirm
+- assertNotVisible:
+    id: manageInvestmentCategories.edit.Equity
+
+# --- Used category: edit, then delete with a replacement ---------------------
+- tapOn:
+    id: manageInvestmentCategories.back
+- tapOn:
+    id: settings.investments
+- tapOn:
+    id: manageInvestments.add
+- tapOn:
+    id: manageInvestments.form.category
+- tapOn:
+    id: selectInvestmentCategory.option.Metals
+- tapOn:
+    id: manageInvestments.form.name
+- inputText: Gold
+- hideKeyboard
+- tapOn:
+    id: manageInvestments.form.currency
+- tapOn:
+    id: picker.search
+- inputText: IDR
+- hideKeyboard
+- tapOn:
+    id: "picker.option.IDR - .*"
+- scrollUntilVisible:
+    element:
+      id: manageInvestments.form.save
+- tapOn:
+    id: manageInvestments.form.save
+- assertVisible: "Metals"
+- tapOn:
+    id: manageInvestments.back
+- tapOn:
+    id: settings.investmentCategories
+- tapOn:
+    id: manageInvestmentCategories.edit.Metals
+- tapOn:
+    id: manageInvestmentCategories.form.name
+- eraseText: 10
+- inputText: Precious
+- hideKeyboard
+- tapOn:
+    id: manageInvestmentCategories.form.save
+- assertVisible:
+    id: manageInvestmentCategories.edit.Precious
+# A second category to move Gold into. Created here rather than using a seeded
+# one so the flow doesn't depend on the starter list.
+- tapOn:
+    id: manageInvestmentCategories.add
+- tapOn:
+    id: manageInvestmentCategories.form.name
+- inputText: Commodities
+- hideKeyboard
+- tapOn:
+    id: manageInvestmentCategories.form.save
+- assertVisible:
+    id: manageInvestmentCategories.edit.Commodities
+- tapOn:
+    id: manageInvestmentCategories.delete.Precious
+# Gold uses Precious, so the replacement picker must be offered.
+- tapOn:
+    id: manageInvestmentCategories.delete.replacement
+- tapOn:
+    id: "picker.option.Commodities"
+- tapOn:
+    id: manageInvestmentCategories.deleteConfirm
+- assertNotVisible:
+    id: manageInvestmentCategories.edit.Precious
+- tapOn:
+    id: manageInvestmentCategories.back
+- tapOn:
+    id: settings.investments
+- assertNotVisible: "Precious"
+- assertVisible: "Commodities"              # Gold moved to the replacement
