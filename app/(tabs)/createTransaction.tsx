@@ -2,6 +2,7 @@ import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
+  Keyboard,
   KeyboardAvoidingView,
   Pressable,
   ScrollView,
@@ -997,6 +998,11 @@ export default function CreateTransactionScreen() {
   };
 
   const requestSaveConfirmation = () => {
+    // The popup slot is pinned to the screen bottom, which the keyboard covers
+    // (absolute children ignore KeyboardAvoidingView's padding). Closing the
+    // keyboard first keeps both the confirmation and any validation error
+    // visible without moving the popup back into the form.
+    Keyboard.dismiss();
     if (validateSaveForm()) {
       setPopupMessage(null);
       setConfirmationAction('save');
@@ -1250,7 +1256,11 @@ export default function CreateTransactionScreen() {
 
   const clearButton = (
     <Button
-      onPress={() => setConfirmationAction('clear')}
+      onPress={() => {
+        // Same reason as requestSaveConfirmation: keep the popup off the keyboard.
+        Keyboard.dismiss();
+        setConfirmationAction('clear');
+      }}
       size="small"
       testID="createTransaction.clear"
       style={{ minWidth: clearButtonWidth, width: clearButtonWidth }}
