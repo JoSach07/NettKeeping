@@ -2,7 +2,7 @@
   "expo": {
     "name": "NettKeeping",
     "slug": "nettkeeping",
-    "version": "1.0.0",
+    "version": "0.1.0",
     "orientation": "portrait",
     "icon": "./assets/images/nettkeeping-icon.png",
     "scheme": "nettkeeping",
